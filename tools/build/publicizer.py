@@ -1,24 +1,30 @@
 #!/usr/bin/env python3
-import fileinput
+
+"""
+Usage: publicizer.py someFile.sol
+
+Replaces
+  uint256 internal /* publicForTesting */ someVar;
+with
+  uint256 public /* modifiedForTest */ someVar;
+
+Also replaces "private" instead of "internal", as long as they're followed by
+/* publicForTesting */
+
+The modified file is printed to stdout.
+
+"""
+
 import re
 import sys
 
-# Usage: publicizer.py someFile.sol
-#
-# Replaces
-#   uint256 internal /* publicForTesting */ someVar;
-# with
-#   uint256 public someVar;
-#
-# Also replaces "private" instead of "internal", as long as they're followed by
-# /* publicForTesting */
-#
-# The modified file is printed to stdout.
-
-p = re.compile('\s+(internal|public)\s*/\*\s*publicForTesting\s*\*/\s*')
-replaceWith = ' public /* modifiedForTest */ '
 
 def substitute(content):
+  """Does the actual substitution"""
+
+  p = re.compile(r'\s+(internal|public)\s*/\*\s*publicForTesting\s*\*/\s*')
+  replaceWith = ' public /* modifiedForTest */ '
+
   return p.sub(replaceWith, content)
 
 if __name__ == "__main__":
