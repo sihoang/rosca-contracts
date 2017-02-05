@@ -36,12 +36,12 @@ contract ROSCA {
   // TODO: MUST change this prior to production. Currently this is accounts[9] of the testrpc config
   // used in tests.
   // Address from which fees can be withdrawn.
-  address constant internal FEE_ADDRESS = 0x1df62f291b2e969fb0849d99d9ce41e2f137006e;
+  address constant internal FEE_ADDRESS = 0x0398189271d4c4cdc3bb44f9be8f7fcb7e44eea5;
 
   // TODO(ron): replace this with an actual wallet. Right now this is accounts[9] of the testrpc used
   // by tests.
   // WeTrust's account from which Escape Hatch can be enanbled.
-  address constant internal ESCAPE_HATCH_ENABLER = 0x1df62f291b2e969fb0849d99d9ce41e2f137006e;
+  address constant internal ESCAPE_HATCH_ENABLER = 0x0398189271d4c4cdc3bb44f9be8f7fcb7e44eea5;
 
   /////////
   // EVENTS
