@@ -37,6 +37,8 @@ contract ROSCA {
   // WeTrust's Address from which fees can be withdrawn.
   address constant internal FEE_ADDRESS = 0x0398189271d4c4cdc3bb44f9be8f7fcb7e44eea5;
 
+  // WeTrust's account from which Escape Hatch can be enanbled.
+  address constant internal ESCAPE_HATCH_ENABLER = 0x0398189271d4c4cdc3bb44f9be8f7fcb7e44eea5;
 
   /////////
   // EVENTS
