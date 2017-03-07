@@ -17,18 +17,18 @@ contract Trustcoin is ERC20, SafeMath {
   uint8 public decimals = 18;
   string public symbol = 'TRST';
   string public version = 'TRST1.0';
-  uint256 public totalSupply = 100000000; // One hundred million
-  uint256 public totalMigrated;
-  address public newToken;
+  uint256 public totalSupply = 100000000; // One hundred million (ERC20)
+  uint256 public totalMigrated; // Begins at 0 and increments if tokens are migrated to a new contract
+  address public newToken; // Address of the new token contract
 
-  mapping(address => uint) public balances;
-  mapping (address => mapping (address => uint)) public allowed;
+  mapping(address => uint) public balances; // (ERC20)
+  mapping (address => mapping (address => uint)) public allowed; // (ERC20)
 
   bool public migrationActive;
   address public migrationMaster;
 
-  event Transfer(address from, address to, uint256 value);
-  event Approval(address from, address to, uint256 value);
+  event Transfer(address from, address to, uint256 value); // (ERC20)
+  event Approval(address from, address to, uint256 value); // (ERC20)
   event Discard(address owner, uint256 value);
 
   modifier onlyFromMigrationMaster() {
@@ -42,6 +42,7 @@ contract Trustcoin is ERC20, SafeMath {
   }
 
   /**
+   *  (ERC20)
    *  Transfers a specified balance from one address to another
    *  @param {address} _to Address to which tokens should go
    *  @param {uint} _value Number of tokens to transfer
@@ -55,6 +56,7 @@ contract Trustcoin is ERC20, SafeMath {
   }
 
   /**
+   *  (ERC20)
    *  Allows contracts to send tokens on our behalf
    *  @param {address} _from Address from which to transfer tokens
    *  @param {address} _to Address to which tokens are to be transferred
@@ -71,6 +73,7 @@ contract Trustcoin is ERC20, SafeMath {
   }
 
   /**
+   *  (ERC20)
    *  Returns the token balance of any address
    *  @param {address} _owner Address for which to return the balance
    *  @return {uint} balance Balance of the specified address
@@ -80,6 +83,7 @@ contract Trustcoin is ERC20, SafeMath {
   }
 
   /**
+   *  (ERC20)
    *  Allow an address to control a specified amount of your tokens
    *  @param {address} _spender Address to which control is to be handed
    *  @param {uint} _value Number of tokens to give control over
@@ -92,6 +96,7 @@ contract Trustcoin is ERC20, SafeMath {
   }
 
   /**
+   *  (ERC20)
    *  Returns the remaining aprooved allowance for an address relative to the owner
    *  @param {address} _owner Owner of the tokens
    *  @param {address} _spender Spender of the tokens
