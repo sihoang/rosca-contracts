@@ -27,12 +27,10 @@ contract Trustcoin is ERC20, SafeMath {
   bool public migrationActive;
   address public migrationMaster;
 
-  event Transfer(address from, address to, uint256 value); // (ERC20)
-  event Approval(address from, address to, uint256 value); // (ERC20)
   event Discard(address owner, uint256 value);
 
   modifier onlyFromMigrationMaster() {
-    if (msg.sender != migrationMaster) throw
+    if (msg.sender != migrationMaster) throw;
     _;
   }
 
@@ -121,7 +119,7 @@ contract Trustcoin is ERC20, SafeMath {
 
   /**
    *  Sets the address of the new token contract, so we know who to
-   *  accept migrate() calls from, and enables token migrations
+   *  accept discardTokens() calls from, and enables token migrations
    *  @param {address} _newToken Address of the new Trustcoin contract
    */
   function setNewToken(address _newToken) onlyFromMigrationMaster external {

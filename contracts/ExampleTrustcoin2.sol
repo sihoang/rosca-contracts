@@ -10,7 +10,7 @@ pragma solidity ^0.4.8;
 
 import './lib/ERC20.sol';
 import './lib/SafeMath.sol';
-import './Trustcoin.sol'
+import './Trustcoin.sol';
 
 contract Trustcoin2 is ERC20, SafeMath {
 
@@ -19,7 +19,7 @@ contract Trustcoin2 is ERC20, SafeMath {
   string public symbol = 'TRST2';
   string public version = 'TRST2.0';
   uint256 public totalSupply; // Begins at 0, but increments as old tokens are migrated (ERC20)
-  address public oldToken = '0xdeadbeef'; // Address of our old Trustcoin token contract
+  address public oldToken = '0x123f681646d4a755815f9cb19e1acc8565a0c2ac'; // Address of our old Trustcoin token contract (this is just a random address)
   bool public allowOldMigrations = true; // Is set to false when we finalize migration
   uint256 public allowOldMigrationsUntil = (now + 26 weeks); // Hardcode a timestamp here?
 
@@ -27,18 +27,17 @@ contract Trustcoin2 is ERC20, SafeMath {
   mapping (address => mapping (address => uint)) public allowed; // (ERC20)
 
   // Variables supporting the migration to a new contract (Trustcoin3)
+  uint256 public totalMigrated;
   bool public migrationActive;
   address public migrationMaster;
-
-  event Transfer(address from, address to, uint256 value); // (ERC20)
-  event Approval(address from, address to, uint256 value); // (ERC20)
+  address public newToken;
 
   event Discard(address owner, uint256 value);
   event Migrate(address owner, uint256 value);
   event MigrationFinalized();
 
   modifier onlyFromMigrationMaster() {
-    if (msg.sender != migrationMaster) throw
+    if (msg.sender != migrationMaster) throw;
     _;
   }
 
@@ -127,7 +126,7 @@ contract Trustcoin2 is ERC20, SafeMath {
 
   /**
    *  Sets the address of the new token contract, so we know who to
-   *  accept migrate() calls from, and enables token migrations
+   *  accept discardTokens() calls from, and enables token migrations
    *  @param {address} _newToken Address of the new Trustcoin contract
    */
   function setNewToken(address _newToken) onlyFromMigrationMaster external {
