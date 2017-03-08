@@ -20,8 +20,8 @@ contract ExampleTrustcoin2 is ERC20TokenInterface, SafeMath {
   string public constant version = 'TRST2.0';
   uint256 public totalSupply; // Begins at 0, but increments as old tokens are migrated into this contract (ERC20)
   address public constant oldToken = 0x6651fdb9d5d15ca55cc534ee5fa6c3432acdf15b; // Address of our old Trustcoin token contract (this is just a random address)
-  bool public allowOldMigrations = true; // Is set to false when we finalize migration
-  uint256 public allowOldMigrationsUntil = (now + 26 weeks);
+  bool public allowIncomingMigrations = true; // Is set to false when we finalize migration
+  uint256 public allowIncomingMigrationsUntil = (now + 26 weeks);
 
   mapping(address => uint) public balances; // (ERC20)
   mapping (address => mapping (address => uint)) public allowed; // (ERC20)
@@ -110,7 +110,7 @@ contract ExampleTrustcoin2 is ERC20TokenInterface, SafeMath {
    *  @param _value Number of tokens to be migrated
    */
   function migrateOldTokens(uint256 _value) external {
-    if (!allowOldMigrations) throw;
+    if (!allowIncomingMigrations) throw;
     if (_value == 0) throw;
     Trustcoin(oldToken).discardTokens(msg.sender, _value);
     totalSupply = safeAdd(totalSupply, _value);
@@ -123,9 +123,9 @@ contract ExampleTrustcoin2 is ERC20TokenInterface, SafeMath {
    *  to the new one
    */
   function finalizeMigration() onlyFromMigrationMaster external {
-    if (!allowOldMigrations) throw;
-    if (now < allowOldMigrationsUntil) throw;
-    allowOldMigrations = false;
+    if (!allowIncomingMigrations) throw;
+    if (now < allowIncomingMigrationsUntil) throw;
+    allowIncomingMigrations = false;
     MigrationFinalized();
   }
 
