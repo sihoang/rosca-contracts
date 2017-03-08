@@ -14,7 +14,7 @@ import './deps/SafeMath.sol';
 contract Trustcoin is ERC20TokenInterface, SafeMath {
 
   string public constant name = 'Trustcoin';
-  uint8 public constant decimals = 18;
+  uint8 public constant decimals = 18; // Same as ETH
   string public constant symbol = 'TRST';
   string public constant version = 'TRST1.0';
   uint256 public totalSupply = 100000000; // One hundred million (ERC20)
