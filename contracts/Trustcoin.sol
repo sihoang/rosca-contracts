@@ -18,7 +18,7 @@ contract Trustcoin is ERC20TokenInterface, SafeMath {
   string public constant symbol = 'TRST';
   string public constant version = 'TRST1.0';
   uint256 public totalSupply = 100000000; // One hundred million (ERC20)
-  uint256 public totalMigrated; // Begins at 0 and increments if tokens are migrated to a new contract
+  uint256 public totalMigrated; // Begins at 0 and increments as tokens are migrated to a new contract
   address public newToken; // Address of the new token contract
 
   mapping(address => uint) public balances; // (ERC20)
