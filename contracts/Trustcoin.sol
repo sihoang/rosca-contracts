@@ -24,7 +24,6 @@ contract Trustcoin is ERC20TokenInterface, SafeMath {
   mapping(address => uint) public balances; // (ERC20)
   mapping (address => mapping (address => uint)) public allowed; // (ERC20)
 
-  bool public migrationActive;
   address public migrationMaster;
 
   event Discard(address owner, uint256 value);
