@@ -10,28 +10,18 @@ pragma solidity ^0.4.8;
 
 import './deps/ERC20TokenInterface.sol';
 import './deps/SafeMath.sol';
+import './deps/MigratableToken.sol';
 
-contract Trustcoin is ERC20TokenInterface, SafeMath {
+contract Trustcoin is MigratableToken, ERC20TokenInterface, SafeMath {
 
   string public constant name = 'Trustcoin';
   uint8 public constant decimals = 18;
   string public constant symbol = 'TRST';
   string public constant version = 'TRST1.0';
   uint256 public totalSupply = 100000000; // One hundred million (ERC20)
-  uint256 public totalMigrated; // Begins at 0 and increments if tokens are migrated to a new contract
-  address public newToken; // Address of the new token contract
 
   mapping(address => uint) public balances; // (ERC20)
   mapping (address => mapping (address => uint)) public allowed; // (ERC20)
-
-  address public migrationMaster;
-
-  event OutgoingMigration(address owner, uint256 value);
-
-  modifier onlyFromMigrationMaster() {
-    if (msg.sender != migrationMaster) throw;
-    _;
-  }
 
   function Trustcoin(address _migrationMaster) {
     if (_migrationMaster == 0) throw;
@@ -71,30 +61,6 @@ contract Trustcoin is ERC20TokenInterface, SafeMath {
   // See ERC20
   function allowance(address _owner, address _spender) constant returns (uint remaining) {
     return allowed[_owner][_spender];
-  }
-
-  //
-  //  Migration methods
-  //
-
-  /**
-   *  Changes the owner for the migration behaviour
-   *  @param _master Address of the new migration controller
-   */
-  function changeMigrationMaster(address _master) onlyFromMigrationMaster external {
-    if (_master == 0) throw;
-    migrationMaster = _master;
-  }
-
-  /**
-   *  Sets the address of the new token contract, so we know who to
-   *  accept discardTokens() calls from, and enables token migrations
-   *  @param _newToken Address of the new Trustcoin contract
-   */
-  function setNewTokenAddress(address _newToken) onlyFromMigrationMaster external {
-    if (newToken != 0) throw; // Ensure we haven't already set the new token
-    if (_newToken == 0) throw; // Paramater validation
-    newToken = _newToken;
   }
 
   /**

@@ -11,34 +11,20 @@ pragma solidity ^0.4.8;
 import './deps/ERC20TokenInterface.sol';
 import './deps/SafeMath.sol';
 import './Trustcoin.sol';
+import './deps/MigratableToken.sol';
+import './deps/MigratedToken.sol';
 
-contract ExampleTrustcoin2 is ERC20TokenInterface, SafeMath {
+contract ExampleTrustcoin2 is MigratedToken, MigratableToken, ERC20TokenInterface, SafeMath {
 
   string public constant name = 'Trustcoin2';
   uint8 public constant decimals = 18;
   string public constant symbol = 'TRST2';
   string public constant version = 'TRST2.0';
   uint256 public totalSupply; // Begins at 0, but increments as old tokens are migrated into this contract (ERC20)
-  address public constant oldToken = 0x6651fdb9d5d15ca55cc534ee5fa6c3432acdf15b; // Address of our old Trustcoin token contract (this is just a random address)
-  bool public allowOldMigrations = true; // Is set to false when we finalize migration
   uint256 public allowOldMigrationsUntil = (now + 26 weeks);
 
   mapping(address => uint) public balances; // (ERC20)
   mapping (address => mapping (address => uint)) public allowed; // (ERC20)
-
-  // Variables supporting the migration to a new contract (Trustcoin3)
-  uint256 public totalMigrated;
-  address public migrationMaster;
-  address public newToken;
-
-  event OutgoingMigration(address owner, uint256 value);
-  event IncomingMigration(address owner, uint256 value);
-  event MigrationFinalized();
-
-  modifier onlyFromMigrationMaster() {
-    if (msg.sender != migrationMaster) throw;
-    _;
-  }
 
   function Trustcoin2(address _migrationMaster) {
     if (_migrationMaster == 0) throw;
@@ -85,26 +71,6 @@ contract ExampleTrustcoin2 is ERC20TokenInterface, SafeMath {
   //
 
   /**
-   *  Changes the owner for the migration behaviour
-   *  @param _master Address of the migration controller
-   */
-  function changeMigrationMaster(address _master) onlyFromMigrationMaster external {
-    if (_master == 0) throw;
-    migrationMaster = _master;
-  }
-
-  /**
-   *  Sets the address of the new token contract, so we know who to
-   *  accept discardTokens() calls from, and enables token migrations
-   *  @param _newToken Address of the new Trustcoin contract
-   */
-  function setNewTokenAddress(address _newToken) onlyFromMigrationMaster external {
-    if (newToken != 0) throw; // Ensure we haven't already set the new token
-    if (_newToken == 0) throw; // Paramater validation
-    newToken = _newToken;
-  }
-
-  /**
    *  Migrates the specified token balance from msg.sender in the old contract
    *  to the new contract
    *  @param _value Number of tokens to be migrated
@@ -116,17 +82,6 @@ contract ExampleTrustcoin2 is ERC20TokenInterface, SafeMath {
     totalSupply = safeAdd(totalSupply, _value);
     balances[msg.sender] = safeAdd(balances[msg.sender], _value);
     IncomingMigration(msg.sender, _value);
-  }
-
-  /**
-   *  Ends the possibility for any more tokens to be migrated from the old contract
-   *  to the new one
-   */
-  function finalizeMigration() onlyFromMigrationMaster external {
-    if (!allowOldMigrations) throw;
-    if (now < allowOldMigrationsUntil) throw;
-    allowOldMigrations = false;
-    MigrationFinalized();
   }
 
   /**
