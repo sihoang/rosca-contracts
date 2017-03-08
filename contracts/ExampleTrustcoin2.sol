@@ -100,7 +100,7 @@ contract ExampleTrustcoin2 is ERC20TokenInterface, SafeMath {
    */
   function setNewTokenAddress(address _newToken) onlyFromMigrationMaster external {
     if (newToken != 0) throw; // Ensure we haven't already set the new token
-    if (_newToken == 0) throw; // Paramater validation
+    if (_newToken == 0) throw;
     newToken = _newToken;
   }
 
