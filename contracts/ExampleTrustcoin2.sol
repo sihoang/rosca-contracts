@@ -23,8 +23,8 @@ contract ExampleTrustcoin2 is ERC20TokenInterface, SafeMath {
   bool public allowIncomingMigrations = true; // Is set to false when we finalize migration
   uint256 public canFinalizeIncomingMigrationsAfter = (now + 26 weeks);
 
-  mapping(address => uint) public balances; // (ERC20)
-  mapping (address => mapping (address => uint)) public allowed; // (ERC20)
+  mapping(address => uint256) public balances; // (ERC20)
+  mapping (address => mapping (address => uint256)) public allowed; // (ERC20)
 
   // Variables supporting the migration to a new contract (Trustcoin3)
   uint256 public totalMigrated;

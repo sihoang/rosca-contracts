@@ -21,8 +21,8 @@ contract Trustcoin is ERC20TokenInterface, SafeMath {
   uint256 public totalMigrated; // Begins at 0 and increments as tokens are migrated to a new contract
   address public newTokenAddress; // Address of the new token contract
 
-  mapping(address => uint) public balances; // (ERC20)
-  mapping (address => mapping (address => uint)) public allowed; // (ERC20)
+  mapping(address => uint256) public balances; // (ERC20)
+  mapping (address => mapping (address => uint256)) public allowed; // (ERC20)
 
   address public migrationMaster;
 
