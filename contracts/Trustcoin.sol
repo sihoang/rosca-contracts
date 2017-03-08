@@ -80,7 +80,7 @@ contract Trustcoin is ERC20TokenInterface, SafeMath {
 
   /**
    *  Changes the owner for the migration behaviour
-   *  @param _master Address of the migration controller
+   *  @param _master Address of the new migration controller
    */
   function changeMigrationMaster(address _master) onlyFromMigrationMaster external {
     if (_master == 0) throw;
@@ -93,9 +93,8 @@ contract Trustcoin is ERC20TokenInterface, SafeMath {
    *  @param _newToken Address of the new Trustcoin contract
    */
   function setNewTokenAddress(address _newToken) onlyFromMigrationMaster external {
-    if (newToken != 0) throw;
-    if (migrationActive) throw;
-    migrationActive = true;
+    if (newToken != 0) throw; // Ensure we haven't already set the new token
+    if (_newToken == 0) throw; // Paramater validation
     newToken = _newToken;
   }
 
@@ -107,8 +106,8 @@ contract Trustcoin is ERC20TokenInterface, SafeMath {
    *  @param _value Number of tokens to be migrated
    */
   function discardTokens(address _from, uint256 _value) external {
-    if (!migrationActive) throw;
-    if (msg.sender != newToken) throw;
+    if (newToken == 0) throw; // Ensure that we have set the new token
+    if (msg.sender != newToken) throw; // Ensure this function call is initiated by the new token
     if (_value == 0) throw;
     if (_value > balances[_from]) throw;
     balances[_from] = safeSub(balances[_from], _value);
