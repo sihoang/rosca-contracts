@@ -29,7 +29,7 @@ contract ExampleTrustcoin2 is ERC20TokenInterface, SafeMath {
   // Variables supporting the migration to a new contract (Trustcoin3)
   uint256 public totalMigrated;
   address public migrationMaster;
-  address public newToken;
+  address public newTokenAddress;
 
   event OutgoingMigration(address owner, uint256 value);
   event IncomingMigration(address owner, uint256 value);
@@ -96,12 +96,12 @@ contract ExampleTrustcoin2 is ERC20TokenInterface, SafeMath {
   /**
    *  Sets the address of the new token contract, so we know who to
    *  accept discardTokens() calls from, and enables token migrations
-   *  @param _newToken Address of the new Trustcoin contract
+   *  @param _newTokenAddress Address of the new Trustcoin contract
    */
-  function setNewTokenAddress(address _newToken) onlyFromMigrationMaster external {
-    if (newToken != 0) throw; // Ensure we haven't already set the new token
-    if (_newToken == 0) throw;
-    newToken = _newToken;
+  function setNewTokenAddress(address _newTokenAddress) onlyFromMigrationMaster external {
+    if (newTokenAddress != 0) throw; // Ensure we haven't already set the new token
+    if (_newTokenAddress == 0) throw;
+    newTokenAddress = _newTokenAddress;
   }
 
   /**
@@ -137,8 +137,8 @@ contract ExampleTrustcoin2 is ERC20TokenInterface, SafeMath {
    *  @param _value Number of tokens to be migrated
    */
   function discardTokens(address _from, uint256 _value) external {
-    if (newToken == 0) throw; // Ensure that we have set the new token
-    if (msg.sender != newToken) throw; // Ensure this function call is initiated by the new token
+    if (newTokenAddress == 0) throw; // Ensure that we have set the new token
+    if (msg.sender != newTokenAddress) throw; // Ensure this function call is initiated by the new token
     if (_value == 0) throw;
     if (_value > balances[_from]) throw;
     balances[_from] = safeSub(balances[_from], _value);
