@@ -19,7 +19,7 @@ contract Trustcoin2 is ERC20TokenInterface, SafeMath {
   string public constant symbol = 'TRST2';
   string public constant version = 'TRST2.0';
   uint256 public totalSupply; // Begins at 0, but increments as old tokens are migrated into this contract (ERC20)
-  address public constant oldToken = '0x123f681646d4a755815f9cb19e1acc8565a0c2ac'; // Address of our old Trustcoin token contract (this is just a random address)
+  address public constant oldToken = 0x6651fdb9d5d15ca55cc534ee5fa6c3432acdf15b; // Address of our old Trustcoin token contract (this is just a random address)
   bool public allowOldMigrations = true; // Is set to false when we finalize migration
   uint256 public allowOldMigrationsUntil = (now + 26 weeks);
 
