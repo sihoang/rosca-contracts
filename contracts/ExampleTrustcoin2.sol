@@ -12,7 +12,7 @@ import './deps/ERC20TokenInterface.sol';
 import './deps/SafeMath.sol';
 import './Trustcoin.sol';
 
-contract Trustcoin2 is ERC20TokenInterface, SafeMath {
+contract ExampleTrustcoin2 is ERC20TokenInterface, SafeMath {
 
   string public constant name = 'Trustcoin2';
   uint8 public constant decimals = 18;
@@ -87,7 +87,7 @@ contract Trustcoin2 is ERC20TokenInterface, SafeMath {
 
   /**
    *  Changes the owner for the migration behaviour
-   *  @param {address} _master Address of the migration controller
+   *  @param _master Address of the migration controller
    */
   function changeMigrationMaster(address _master) onlyFromMigrationMaster external {
     if (_master == 0) throw;
@@ -97,7 +97,7 @@ contract Trustcoin2 is ERC20TokenInterface, SafeMath {
   /**
    *  Sets the address of the new token contract, so we know who to
    *  accept discardTokens() calls from, and enables token migrations
-   *  @param {address} _newToken Address of the new Trustcoin contract
+   *  @param _newToken Address of the new Trustcoin contract
    */
   function setNewTokenAddress(address _newToken) onlyFromMigrationMaster external {
     if (newToken != 0) throw;
@@ -109,7 +109,7 @@ contract Trustcoin2 is ERC20TokenInterface, SafeMath {
   /**
    *  Migrates the specified token balance from msg.sender in the old contract
    *  to the new contract
-   *  @param {uint256} _value Number of tokens to be migrated
+   *  @param _value Number of tokens to be migrated
    */
   function migrateOldTokens(uint256 _value) external {
     if (!allowOldMigrations) throw;
@@ -135,8 +135,8 @@ contract Trustcoin2 is ERC20TokenInterface, SafeMath {
    *  Burns the tokens from an address and increments the totalMigrated
    *  by the same value. Only called by the new contract when tokens
    *  are migrated.
-   *  @param {address} _from Address which holds the tokens
-   *  @param {uint256} _value Number of tokens to be migrated
+   *  @param _from Address which holds the tokens
+   *  @param _value Number of tokens to be migrated
    */
   function discardTokens(address _from, uint256 _value) external {
     if (!migrationActive) throw;
