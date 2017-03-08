@@ -26,7 +26,7 @@ contract Trustcoin is ERC20TokenInterface, SafeMath {
 
   address public migrationMaster;
 
-  event Discard(address owner, uint256 value);
+  event OutgoingMigration(address owner, uint256 value);
 
   modifier onlyFromMigrationMaster() {
     if (msg.sender != migrationMaster) throw;
@@ -112,7 +112,7 @@ contract Trustcoin is ERC20TokenInterface, SafeMath {
     balances[_from] = safeSub(balances[_from], _value);
     totalSupply = safeSub(totalSupply, _value);
     totalMigrated = safeAdd(totalMigrated, _value);
-    Discard(_from, _value);
+    OutgoingMigration(_from, _value);
   }
 
 }
