@@ -12,7 +12,7 @@ import './deps/ERC20TokenInterface.sol';
 import './deps/SafeMath.sol';
 import './Trustcoin.sol';
 
-contract Trustcoin2 is ERC20, SafeMath {
+contract Trustcoin2 is ERC20TokenInterface, SafeMath {
 
   string public constant name = 'Trustcoin2';
   uint8 public constant decimals = 18;
@@ -47,7 +47,7 @@ contract Trustcoin2 is ERC20, SafeMath {
   }
 
   // See ERC20
-  function transfer(address _to, uint _value) external returns (bool success) {
+  function transfer(address _to, uint _value) returns (bool success) {
     balances[msg.sender] = safeSub(balances[msg.sender], _value);
     balances[_to] = safeAdd(balances[_to], _value);
     Transfer(msg.sender, _to, _value);
@@ -55,7 +55,7 @@ contract Trustcoin2 is ERC20, SafeMath {
   }
 
   // See ERC20
-  function transferFrom(address _from, address _to, uint _value) external returns (bool success) {
+  function transferFrom(address _from, address _to, uint _value) returns (bool success) {
     var _allowance = allowed[_from][msg.sender];
     balances[_to] = safeAdd(balances[_to], _value);
     balances[_from] = safeSub(balances[_from], _value);
@@ -65,19 +65,19 @@ contract Trustcoin2 is ERC20, SafeMath {
   }
 
   // See ERC20
-  function balanceOf(address _owner) constant external returns (uint balance) {
+  function balanceOf(address _owner) constant returns (uint balance) {
     return balances[_owner];
   }
 
   // See ERC20
-  function approve(address _spender, uint _value) external returns (bool success) {
+  function approve(address _spender, uint _value) returns (bool success) {
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
     return true;
   }
 
   // See ERC20
-  function allowance(address _owner, address _spender) constant external returns (uint remaining) {
+  function allowance(address _owner, address _spender) constant returns (uint remaining) {
     return allowed[_owner][_spender];
   }
 
