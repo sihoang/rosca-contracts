@@ -1,7 +1,11 @@
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.7;
+
+import "./deps/ERC20TokenInterface.sol";
+
+// DO NOT USE, THIS IS NOT YET TESTED
 
 /**
- * @title ROSCA on a blockchain. THIS IS THE VERSION 1 THAT DOES NOT SUPPORT ERC20 TOKENS.
+ * @title ROSCA on a blockchain.
  *
  * A ROSCA (Rotating and Savings Credit Association) is an agreement between
  * trusted friends to contribute funds on a periodic basis to a "pot", and in
@@ -10,21 +14,19 @@ pragma solidity ^0.4.4;
  * among those who have not won a bid before.
  * The discount (gap between bid and total round contributions) is dispersed
  * evenly between the participants.
+ *
+ * Supports ETH or ERC20-compliant tokens.
  */
-contract ROSCAv1 {
+contract tokenableROSCA {
 
   ////////////
   // CONSTANTS
   ////////////
-  uint64 constant internal MIN_CONTRIBUTION_SIZE = 1 finney;  // 1e-3 ether
-  uint128 constant internal MAX_CONTRIBUTION_SIZE = 10 ether;
-
   // Maximum fee (in 1/1000s) from dispersements that is shared between foreperson and other stakeholders..
   uint16 constant internal MAX_FEE_IN_THOUSANDTHS = 20;
 
   // Start time of the ROSCA must be at least this much time ahead of when the ROSCA is created
-  // Note: right now we allow
-  uint32 constant internal MINIMUM_TIME_BEFORE_ROSCA_START = 0;
+  uint32 constant internal MINIMUM_TIME_BEFORE_ROSCA_START = 1 days;
 
   uint8 constant internal MIN_ROUND_PERIOD_IN_DAYS = 1;
   uint8 constant internal MAX_ROUND_PERIOD_IN_DAYS = 30;
@@ -36,7 +38,7 @@ contract ROSCAv1 {
 
   // TODO(ron): replace this with an actual wallet. Right now this is accounts[9] of the testrpc used
   // by tests.
-  // WeTrust's account from which Escape Hatch can be enanbled.
+  // WeTrust's account from which Escape Hatch can be enabled.
   address constant internal ESCAPE_HATCH_ENABLER = 0x1dF62f291b2E969fB0849d99D9Ce41e2F137006e;
 
   /////////
@@ -45,14 +47,14 @@ contract ROSCAv1 {
   event LogContributionMade(address user, uint256 amount);
   event LogStartOfRound(uint256 currentRound);
   event LogNewLowestBid(uint256 bid,address winnerAddress);
-  event LogRoundFundsReleased(address winnerAddress, uint256 amountInWei);
+  event LogRoundFundsReleased(address winnerAddress, uint256 amount);
   event LogRoundNoWinner(uint256 currentRound);
   event LogFundsWithdrawal(address user, uint256 amount);
   // Fired when withdrawer is entitled for a larger amount than the contract
   // actually holds (excluding fees). A LogFundsWithdrawal will follow
   // this event with the actual amount released, if send() is successful.
   event LogCannotWithdrawFully(uint256 creditAmount);
-  event LogUnsuccessfulBid(address bidder,uint256 bidInWei,uint256 lowestBid);
+  event LogUnsuccessfulBid(address bidder,uint256 bid, uint256 lowestBid);
   event LogEndOfROSCA();
   event LogForepersonSurplusWithdrawal(uint256 amount);
   event LogFeesWithdrawal(uint256 amount);
@@ -73,6 +75,7 @@ contract ROSCAv1 {
   address internal foreperson;
   uint128 internal contributionSize;
   uint256 internal startTime;
+  ERC20TokenInterface public tokenContract;  // public - allow easy verification of token contract.
 
   // ROSCA state
   bool internal endOfROSCA = false;
@@ -168,8 +171,14 @@ contract ROSCAv1 {
   /**
     * @dev Creates a new ROSCA and initializes the necessary variables. ROSCA starts after startTime.
     * Creator of the contract becomes foreperson and a participant.
+    *
+    * If erc20TokenContract is 0, ETH is taken to be the currency of this ROSCA. Otherwise, this
+    * contract assumes `erc20tokenContract` specifies an ERC20-compliant token contract.
+    * Note it's the creator's responsibility to check that the provided contract is ERC20 compliant and that
+    * it's safe to use.
     */
-  function ROSCAv1(
+  function ROSCA (
+      ERC20TokenInterface erc20tokenContract,
       uint16 roundPeriodInDays_,
       uint128 contributionSize_,
       uint256 startTime_,
@@ -180,9 +189,6 @@ contract ROSCAv1 {
     }
     roundPeriodInDays = roundPeriodInDays_;
 
-    if (contributionSize_ < MIN_CONTRIBUTION_SIZE || contributionSize_ > MAX_CONTRIBUTION_SIZE) {
-      throw;
-    }
     contributionSize = contributionSize_;
 
     if (startTime_ < (now + MINIMUM_TIME_BEFORE_ROSCA_START)) {
@@ -192,6 +198,7 @@ contract ROSCAv1 {
     if (serviceFeeInThousandths_ > MAX_FEE_IN_THOUSANDTHS) {
       throw;
     }
+    tokenContract = erc20tokenContract;
     serviceFeeInThousandths = serviceFeeInThousandths_;
 
     foreperson = msg.sender;
@@ -331,6 +338,26 @@ contract ROSCAv1 {
     return amount * (1000 - serviceFeeInThousandths) / 1000;
   }
 
+  // Validates a non-zero contribution from msg.sender and returns
+  // the amount.
+  function validateAndReturnContribution() internal returns (uint256) {
+    bool isEthRosca = (tokenContract == address(0));
+    if (!isEthRosca && msg.value > 0) {  // token ROSCAs should not accept ETH
+      throw;
+    }
+    uint256 value = (isEthRosca ? msg.value : tokenContract.allowance(msg.sender, address(this)));
+    if (value == 0) {
+      throw;
+    }
+    if (isEthRosca) {
+      return value;
+    }
+    if (!tokenContract.transferFrom(msg.sender, address(this), value)) {
+      throw;
+    }
+    return value;
+  }
+
   /**
    * Processes a periodic contribution. msg.sender must be one of the participants and will thus
    * identify the contributor.
@@ -339,7 +366,8 @@ contract ROSCAv1 {
    */
   function contribute() payable onlyFromMember roscaNotEnded onlyIfEscapeHatchInactive external {
     User member = members[msg.sender];
-    member.credit += msg.value;
+    uint256 value = validateAndReturnContribution();
+    member.credit += value;
     if (member.debt) {
       // Check if user comes out of debt. We know they won an entire pot as they could not bid,
       // so we check whether their credit w/o that winning is non-delinquent.
@@ -351,7 +379,7 @@ contract ROSCAv1 {
       }
     }
 
-    LogContributionMade(msg.sender, msg.value);
+    LogContributionMade(msg.sender, value);
   }
 
   /**
@@ -362,13 +390,13 @@ contract ROSCAv1 {
    *   plus any past earned discounts are together greater than required contributions).
    * + New bid is lower than the lowest bid so far.
    */
-  function bid(uint256 bidInWei) onlyFromMember roscaNotEnded onlyIfEscapeHatchInactive external {
+  function bid(uint256 bid) onlyFromMember roscaNotEnded onlyIfEscapeHatchInactive external {
     if (members[msg.sender].paid  ||
         currentRound == 0 ||  // ROSCA hasn't started yet
         // participant not in good standing
         members[msg.sender].credit + totalDiscounts < (currentRound * contributionSize) ||
         // bid is less than minimum allowed
-        bidInWei < contributionSize * membersAddresses.length * MIN_DISTRIBUTION_PERCENT / 100) {
+        bid < contributionSize * membersAddresses.length * MIN_DISTRIBUTION_PERCENT / 100) {
       throw;
     }
 
@@ -377,16 +405,25 @@ contract ROSCAv1 {
     uint256 maxAllowedBid = winnerAddress == 0
         ? contributionSize * membersAddresses.length
         : lowestBid * MAX_NEXT_BID_RATIO / 100;
-    if (bidInWei > maxAllowedBid) {
+    if (bid > maxAllowedBid) {
       // We don't throw as this may be hard for the frontend to predict on the
       // one hand because someone else might have bid at the same time,
       // and we'd like to avoid wasting the caller's gas.
-      LogUnsuccessfulBid(msg.sender, bidInWei, lowestBid);
+      LogUnsuccessfulBid(msg.sender, bid, lowestBid);
       return;
     }
-    lowestBid = bidInWei;
+    lowestBid = bid;
     winnerAddress = msg.sender;
     LogNewLowestBid(lowestBid, winnerAddress);
+  }
+
+  // Sends funds (either ETH or tokens) to msg.sender. Returns whether successful.
+  function sendFundsToMsgSender(uint256 value) internal returns (bool) {
+    bool isEthRosca = (tokenContract == address(0));
+    if (isEthRosca) {
+      return msg.sender.send(value);
+    }
+    return tokenContract.transfer(msg.sender, value);
   }
 
   /**
@@ -414,7 +451,7 @@ contract ROSCAv1 {
       amountToWithdraw = amountAvailable;
     }
     members[msg.sender].credit -= amountToWithdraw;
-    if (!msg.sender.send(amountToWithdraw)) {   // if the send() fails, restore the allowance
+    if (!sendFundsToMsgSender(amountToWithdraw)) {   // if the send() fails, restore the allowance
       // No need to call throw here, just reset the amount owing. This may happen
       // for nonmalicious reasons, e.g. the receiving contract running out of gas.
       members[msg.sender].credit += amountToWithdraw;
@@ -445,7 +482,16 @@ contract ROSCAv1 {
    * the amount withdrawable by participants.
    */
   function getContractNetBalance() external constant returns(uint256) {
-    return this.balance - totalFees;
+    return getBalance() - totalFees;
+  }
+
+  /**
+   * Returns the balance of this contract, in ETH or the ERC20 token involved.
+   */
+  function getBalance() internal constant returns (uint256) {
+    bool isEthRosca = (tokenContract == address(0));
+
+    return isEthRosca ? this.balance : tokenContract.balanceOf(address(this));
   }
 
   /**
@@ -463,8 +509,8 @@ contract ROSCAv1 {
     }
 
     forepersonSurplusCollected = true;
-    uint256 amountToCollect = this.balance - totalFees;
-    if (!foreperson.send(amountToCollect)) {   // if the send() fails, restore the flag
+    uint256 amountToCollect = getBalance() - totalFees;
+    if (!sendFundsToMsgSender(amountToCollect)) {   // if the send() fails, restore the flag
       // No need to call throw here, just reset the amount owing. This may happen
       // for nonmalicious reasons, e.g. the receiving contract running out of gas.
       forepersonSurplusCollected = false;
@@ -486,12 +532,12 @@ contract ROSCAv1 {
     }
     uint256 tempTotalFees = totalFees;  // prevent re-entry.
     totalFees = 0;
-    if (!foreperson.send(tempTotalFees)) {   // if the send() fails, restore totalFees
+    if (!sendFundsToMsgSender(tempTotalFees)) {   // if the send() fails, restore totalFees
       // No need to call throw here, just reset the amount owing. This may happen
       // for nonmalicious reasons, e.g. the receiving contract running out of gas.
       totalFees = tempTotalFees;
     } else {
-      LogFeesWithdrawal(tempTotalFees);
+      LogFeesWithdrawal(totalFees);
     }
   }
 
